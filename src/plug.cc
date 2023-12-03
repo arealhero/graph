@@ -5,6 +5,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+extern "C" {
+#define PLUG(name, retval, args...) retval name(args)
+PLUG_DECLARATIONS
+#undef PLUG
+}
+
 void window_focus_callback(GLFWwindow* window, int focused) {
     // TODO(vsharshukov): cap FPS to like 30 if window is not in focus
     if (focused) {
@@ -24,6 +30,7 @@ static void set_callbacks(State* state) {
 
     glfwSetWindowUserPointer(state->window, state);
 }
+
 static void unset_callbacks(State* state) {
     glfwSetFramebufferSizeCallback(state->window, NULL);
     glfwSetWindowFocusCallback(state->window, NULL);
