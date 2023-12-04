@@ -21,7 +21,7 @@ PLUG_DECLARATIONS
 
 namespace fs = std::filesystem;
 
-Maybe<Shader> find_shader(const Shaders& shaders, const fs::path& filename)
+TMaybe<Shader> find_shader(const Shaders& shaders, const fs::path& filename)
 {
     auto it = shaders.items.find(filename);
     if (it != shaders.items.end()) {
@@ -31,11 +31,11 @@ Maybe<Shader> find_shader(const Shaders& shaders, const fs::path& filename)
     return Nothing;
 }
 
-Maybe<std::string_view> get_shader(Assets& assets, const fs::path& filename)
+TMaybe<std::string_view> get_shader(Assets& assets, const fs::path& filename)
 {
     auto cached_shader = find_shader(assets.shaders, filename);
-    if (cached_shader.has_value()) {
-        return cached_shader.value().source_code;
+    if (cached_shader != Nothing) {
+        return cached_shader.Value().source_code;
     }
 
     if (!fs::exists(filename)) {
@@ -82,15 +82,15 @@ static void unset_callbacks(State* state) {
     glfwSetWindowUserPointer(state->window, NULL);
 }
 
-static Maybe<GLuint> compile_shader(State* state, GLenum type, const char* filename) {
+static TMaybe<GLuint> compile_shader(State* state, GLenum type, const char* filename) {
     GLuint shader = glCreateShader(type);
     auto source_code = get_shader(state->assets, filename);
-    if (!source_code.has_value()) {
+    if (source_code == Nothing) {
         fprintf(stderr, "Shader not found: %s\n", filename);
         return false;
     }
 
-    auto ptr = source_code.value().data();
+    auto ptr = source_code.Value().data();
     glShaderSource(shader, 1, &ptr, NULL);
     glCompileShader(shader);
 
@@ -109,20 +109,20 @@ static Maybe<GLuint> compile_shader(State* state, GLenum type, const char* filen
 bool create_shader_program(State* state)
 {
     auto vertex_shader = compile_shader(state, GL_VERTEX_SHADER, "shaders/shader.vert");
-    if (!vertex_shader.has_value()) {
+    if (vertex_shader == Nothing) {
         std::cerr << "Could not compile vertex shader\n";
         return false;
     }
 
     auto fragment_shader = compile_shader(state, GL_FRAGMENT_SHADER, "shaders/shader.frag");
-    if (!fragment_shader.has_value()) {
+    if (fragment_shader == Nothing) {
         std::cerr << "Could not compile fragment shader\n";
         return false;
     }
 
     state->shader_program = glCreateProgram();
-    glAttachShader(state->shader_program, vertex_shader.value());
-    glAttachShader(state->shader_program, fragment_shader.value());
+    glAttachShader(state->shader_program, vertex_shader);
+    glAttachShader(state->shader_program, fragment_shader);
     glLinkProgram(state->shader_program);
 
     int success;
@@ -135,10 +135,10 @@ bool create_shader_program(State* state)
     }
 
     glUseProgram(state->shader_program);
-    glDeleteShader(vertex_shader.value());
-    glDeleteShader(fragment_shader.value());
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
 
-    return state->shader_program;
+    return true;
 }
 
 bool plug_init(State* state)
@@ -166,8 +166,7 @@ bool plug_init(State* state)
 
     glViewport(0, 0, 800, 600);
     set_callbacks(state);
-
-    state->shader_program = create_shader_program(state);
+    create_shader_program(state);
 
     float vertices[] = {
       -0.5f, -0.5f, 0.0f,
