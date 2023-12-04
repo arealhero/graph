@@ -12,6 +12,8 @@ add_subdirectory(libs/glfw SYSTEM)
 
 find_package(OpenGL REQUIRED)
 
+set(CMAKE_CXX_STANDARD 20)
+
 add_library(plug SHARED
   src/plug.cc
 )
