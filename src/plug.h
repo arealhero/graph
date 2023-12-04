@@ -1,7 +1,10 @@
-#ifndef GRAPH_PLUG_H_
-#define GRAPH_PLUG_H_
+#pragma once
 
 #define GL_SILENCE_DEPRECATION
+#include <OpenGL/gl3.h>
+#include <OpenGL/gl3ext.h>
+
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #include <algorithm>
@@ -11,9 +14,32 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include <string>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
+struct Shader {
+    fs::path filename;
+    std::string source_code;
+};
+
+struct Shaders {
+    std::unordered_map<std::string, Shader> items;
+};
+
+struct Assets {
+    Shaders shaders;
+};
+
 typedef struct {
     const char* title;
     GLFWwindow* window;
+
+    GLuint shader_program;
+    GLuint vao;
+
+    Assets assets;
 } State;
 
 #define PLUG_DECLARATIONS                                                      \
@@ -26,7 +52,3 @@ typedef struct {
 #define PLUG(name, retval, args...) typedef retval (*name##_t)(args)
 PLUG_DECLARATIONS
 #undef PLUG
-
-
-
-#endif // GRAPH_PLUG_H_
